@@ -28,8 +28,15 @@ def selectUserType():
     return user
 
 #User logging in with existing account, returns TRUE if logged in, called in existingUser()
-def enterProgram():
+def enterProgram(x):
     canEnter = False
+    #ADMIN VERIFICATION
+    if x == true:
+
+    else:
+        return canEnter
+
+    #continues to login
     search = 'SELECT ID FROM bank_accounts'
     cursor.execute(search)
     acctNUMS = cursor.fetchall()
@@ -55,11 +62,12 @@ def enterProgram():
 
 #User has logged in with existing account , prints menu, called in main()
 def existingUser():
-    canEnter = enterProgram()
+    canEnter = enterProgram(False)
     if canEnter == True:
         printmenu()
 
-#User would like to create an account, adds item to accountDict, called in main()   
+#User would like to create an account, adds item to accountDict, called in main()
+#Needs to add a true/false bank admin value to row and to mysql
 def newUser():
     newACCTnum = input("New Account Number: ")
     if newACCTnum in accountDict:
@@ -71,6 +79,28 @@ def newUser():
     accountDict[newACCTnum]["balance"] = newACCTbalance
     print(accountDict)
 
+#User is a bank admin (NEED TO ADD TRUE OR FALSE ADMIN COLUMN TO MYSQL)
+def bankAdmin():
+    #can enter program will go through admin values
+    canEnter = enterProgram(True)
+    if canEnter == True:
+        adminActive = True
+        while adminActive:
+            print('1. Create New Account\n2. Close Account\n3. Modify an Account')
+            if userType == "1":
+                newUser()
+            elif userType == "2":
+                pass
+            elif userType == "3":
+                pass
+            else:
+                print("Exiting...")
+                adminActive = False
+                break
+        
+    else:
+        print("Sorry, you are not a bank administrator")
+        
 
 #Prints menu, called in existingUser()
 def printmenu():
@@ -104,3 +134,4 @@ def main():
     
 
 main()
+
