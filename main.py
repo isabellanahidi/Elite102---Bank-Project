@@ -30,11 +30,21 @@ def selectUserType():
 #User logging in with existing account, returns TRUE if logged in, called in existingUser()
 def enterProgram():
     canEnter = False
-    accountNUM = input("Account Number: ")
-    for x in accountDict:
+    search = 'SELECT ID FROM bank_accounts'
+    cursor.execute(search)
+    acctNUMS = cursor.fetchall()
+
+    print(acctNUMS)
+    
+    accountNUM = int(input("Account Number: "))
+    for x in accNUMS:
         if accountNUM == x:
+            tempNUM = str(accountNUM)
+            search = 'SELECT PIN FROM bank_accounts WHERE ID =' + tempNUM
+            cursor.execute(search)
+            acctPIN = cursor.fetchone()
             PIN = input("PIN: ")
-            if PIN == accountDict[x]["pin"]:
+            if PIN == acctPIN:
                 canEnter = True
                 return canEnter
             else:
