@@ -30,5 +30,7 @@ TRUNCATE TABLE
 
 cursor.fetchall()
 cursor.execute()
-cursor.commit()
+connection.commit()
+TRUNCATE TABLE bank_accounts
+
 '''

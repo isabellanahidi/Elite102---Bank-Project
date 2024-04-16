@@ -60,16 +60,32 @@ def existingUser():
 #User would like to create an account, adds item to accountDict, called in main()
 #Needs to add a true/false bank admin value to row and to mysql
 def newUser():
-    newACCTnum = input("Making new account?(y/n) ")
+    #newACCTnum = input("Making new account?(y/n) ")
     testQuery = "SELECT MAX(ID) FROM bank_accounts "
+    #lastID = countresult[0][0]
     cursor.execute(testQuery)
-    lastID = cursor.fetchall()
-    print(lastID)
+    countresult = cursor.fetchone()
+    lastID =countresult[0]
+#assigns the next available id number to this new user
+    newID = int(lastID) + 1
+    print("Your ID is now: " + str(newID))
+    newACCTID = str(newID)
     newACCTpin = input("New PIN: ")
-    accountDict[newACCTnum] = {"pin" : newACCTpin, "balance" : 0}
+    addACCTQuery = "INSERT INTO bank_accounts(PIN, balance) VALUES (%s, %s);"
+    val = (newACCTpin, 0)
+    cursor.execute(addACCTQuery, val)
+    connection.commit()
     newACCTbalance = int(input("Account balance: "))
-    accountDict[newACCTnum]["balance"] = newACCTbalance
-    print(accountDict)
+    query = "UPDATE bank_accounts SET balance = %s WHERE ID = %s"
+    val = (newACCTbalance, newACCTID)
+    cursor.execute(query, val)
+    connection.commit()
+    query = "SELECT * FROM bank_accounts WHERE ID = %s PIN = %s"
+    val = (newACCTID, newACCTpin)
+    cursor.execute(query, val)
+    connection.commit()
+    newACCTinfo = cursor.fetchone()
+    print(newACCTinfo)
 
 
 #User is a bank admin (NEED TO ADD TRUE OR FALSE ADMIN COLUMN TO MYSQL)
