@@ -1,6 +1,9 @@
 import time
 import mysql.connector
 
+global active #boolean that keeps program looping
+
+
 connection = mysql.connector.connect(user = 'root', database='lesson_3', password = 'R05esbe11@')
 #cursor is table
 cursor = connection.cursor()
@@ -24,30 +27,37 @@ def enterProgram(x):
     #ADMIN VERIFICATION
     if x == True:
         pass
-    else:
-        return canEnter
 
-    #continues to login
+    #makes sure id exists in data base
     search = 'SELECT ID FROM bank_accounts'
     cursor.execute(search)
-    acctNUMS = cursor.fetchall()
+    acctIDs = cursor.fetchall()
 
-    print(acctNUMS)
+    print(acctIDs)
     
     accountNUM = int(input("Account Number: "))
-    for x in accNUMS:
-        if accountNUM == x:
-            tempNUM = str(accountNUM)
-            search = 'SELECT PIN FROM bank_accounts WHERE ID =' + tempNUM
-            cursor.execute(search)
-            acctPIN = cursor.fetchone()
-            PIN = input("PIN: ")
-            if PIN == acctPIN:
-                canEnter = True
-                return canEnter
-            else:
-                print("Incorrect PIN number, try again.")
-    
+    for x in acctIDs:
+        ID = x[0]
+        if ID == accountNUM:
+            validID = True
+            break
+        else:
+            validID = False
+
+    if validID == True:
+        search = 'SELECT PIN FROM bank_accounts WHERE ID = %s'
+        vals = (accountNUM, )
+        cursor.execute(search, vals)
+        countresult = cursor.fetchone()
+        thePIN =countresult[0]
+
+        PIN = int(input("PIN: "))
+        if PIN == thePIN:
+            canEnter = True
+            return canEnter
+        else:
+            print("Incorrect PIN number, try again.")
+        
     print("Sorry, that account is not in our system")
     return canEnter
 
@@ -56,6 +66,7 @@ def existingUser():
     canEnter = enterProgram(False)
     if canEnter == True:
         printmenu()
+
 
 #User would like to create an account, adds item to accountDict, called in main()
 #Needs to add a true/false bank admin value to row and to mysql
@@ -80,10 +91,9 @@ def newUser():
     val = (newACCTbalance, newACCTID)
     cursor.execute(query, val)
     connection.commit()
-    query = "SELECT * FROM bank_accounts WHERE ID = %s PIN = %s"
-    val = (newACCTID, newACCTpin)
+    query = "SELECT * FROM bank_accounts WHERE ID = %s"
+    val = (newACCTID, )
     cursor.execute(query, val)
-    connection.commit()
     newACCTinfo = cursor.fetchone()
     print(newACCTinfo)
 
@@ -114,6 +124,19 @@ def bankAdmin():
 def printmenu():
     print("//\n 1. Check Balance\n 2. Make Deposit\n 3. Make Withdrawl")
     #NEEDS FUNCTION TO DO EACH OF THESE !!!
+    action = input("Enter action request: ")
+    if action == "1": 
+        #bankAdmin()
+        pass
+    elif action == "2":
+        pass
+        
+    elif action == "3":
+        pass
+    else:
+        print("Exiting...")
+        active = False
+        break
 
 
 def main():
@@ -124,23 +147,24 @@ def main():
     
     while active:
         userType = selectUserType()
-        if userType == "1":
+        if userType == "1": 
+            #bankAdmin()
             pass
         elif userType == "2":
-           # existingUser()
-            pass
+            existingUser()
+            
         elif userType == "3":
             newUser()
         else:
             print("Exiting...")
             active = False
             break
-        '''#Makes easier on the eyes
+        #Makes easier on the eyes
         time.sleep(1)
         print("Going back home...")
         time.sleep(2)
         print()
-        print()'''
+        print()
     
 
 main()
