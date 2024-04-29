@@ -2,6 +2,7 @@ import time
 import mysql.connector
 
 global active #boolean that keeps program looping
+global adminActive #keeps admin looping
 
 connection = mysql.connector.connect(user = 'root', database='lesson_3', password = 'R05esbe11@')
 #cursor is table
@@ -141,7 +142,7 @@ def modifyAccount():
     modifyAction = input('Enter action request: ')
     inputID = int(input("ID: "))
     if modifyAction == "1": #modify balance
-        num = input("(1)Deposit or (2)Withdrawl: ")
+        num = input("(2)Deposit or (3)Withdrawl: ")
         editBalance(num, inputID)
     elif modifyAction == "2": #modify pin
         newPIN = input('New PIN: ')
@@ -171,13 +172,14 @@ def adminAction(userInput):
         val = (inputID, )
         cursor.execute(sql, val)
         connection.commit()
-        print("Account number " + inputID + " sucessfully deleted")
+        print("Account number " + str(inputID) + " sucessfully deleted")
     elif userInput == "3": #Modify account
-        modify = input("1) Modify Balance \n 2) Modify Pin \n 3) Modify Admin Status")
+        print("1) Modify Balance \n2) Modify Pin \n3) Modify Admin Status\n")
         modifyAccount()
     else:
         print("Exiting...")
-        adminActive = False
+        return False
+    return True
 
 #User is a bank admin
 def bankAdmin():
@@ -188,7 +190,7 @@ def bankAdmin():
         while adminActive:
             print('1. Create New Account\n2. Close Account\n3. Modify an Account')
             action = input("Enter action request: ")
-            adminAction(action)
+            adminActive = adminAction(action)
         
 
 #function to edit bank account balance called in printmenu()
@@ -201,19 +203,48 @@ def editBalance(action, ID):
         balance = str(balanceResult[0])
         print('You have $' + balance + ' in your account')
     elif action == "2": #Make deposit
-        pass
+        #gets balance
+        sql = 'SELECT balance FROM bank_accounts WHERE ID = %s'
+        val = (ID, )
+        cursor.execute(sql, val)
+        balanceResult = cursor.fetchone()
+        balance = float(balanceResult[0])
+        #gets deposit amount
+        depositAmount = float(input('Deposit amount: '))
+        newBalance = depositAmount + balance
+        sql = "UPDATE bank_accounts SET balance = %s WHERE ID = %s"
+        val = (newBalance, ID)
+        cursor.execute(sql, val)
+        connection.commit()
     elif action == "3": #Make withdrawl
-        pass
+        #gets balance
+        sql = 'SELECT balance FROM bank_accounts WHERE ID = %s'
+        val = (ID, )
+        cursor.execute(sql, val)
+        balanceResult = cursor.fetchone()
+        balance = float(balanceResult[0])
+        #gets withdrawl amount
+        withdrawlAmount = float(input('Withdrawl amount: '))
+        newBalance = balance - withdrawlAmount
+        sql = "UPDATE bank_accounts SET balance = %s WHERE ID = %s"
+        val = (newBalance, ID)
+        cursor.execute(sql, val)
+        connection.commit()
     else:
         print("Exiting...")
-        active = False
+        return False
+    return True
 
 #Prints menu, called in existingUser()
 def printmenu(ID):
-    print("//\n 1. Check Balance\n 2. Make Deposit\n 3. Make Withdrawl")
-    #NEEDS FUNCTION TO DO EACH OF THESE !!!
-    action = input("Enter action request: ")
-    editBalance(action, ID)
+    global userActive
+    userActive = True
+    while userActive:
+        print("//\n 1. Check Balance\n 2. Make Deposit\n 3. Make Withdrawl")
+        #NEEDS FUNCTION TO DO EACH OF THESE !!!
+        action = input("Enter action request: ")
+        userActive = editBalance(action, ID)
+
     
 
     
