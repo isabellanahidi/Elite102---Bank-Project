@@ -120,7 +120,7 @@ def newUser():
     val = (newACCTpin, 0)
     cursor.execute(addACCTQuery, val)
     connection.commit()
-    newACCTbalance = int(input("Account balance: "))
+    newACCTbalance = float(input("Account balance: "))
     query = "UPDATE bank_accounts SET balance = %s WHERE ID = %s"
     val = (newACCTbalance, newACCTID)
     cursor.execute(query, val)
