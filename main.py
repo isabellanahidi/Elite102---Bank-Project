@@ -3,7 +3,6 @@ import mysql.connector
 
 global active #boolean that keeps program looping
 
-
 connection = mysql.connector.connect(user = 'root', database='lesson_3', password = 'R05esbe11@')
 #cursor is table
 cursor = connection.cursor()
@@ -22,27 +21,60 @@ def selectUserType():
     return user
 
 #User logging in with existing account, returns TRUE if logged in, called in existingUser()
-def enterProgram(x):
+def enterProgram(admin):
     canEnter = False
     #ADMIN VERIFICATION
-    if x == True:
-        pass
+    if admin == True:
+        #Gets ID and checks if admin is actually true in acct
+        search = 'SELECT ID FROM bank_accounts'
+        cursor.execute(search)
+        acctIDs = cursor.fetchall()
+
+        #print(acctIDs)
+        
+        accountNUM = int(input("Account Number: "))
+        for x in acctIDs:
+            ID = x[0]
+            if ID == accountNUM:
+                validID = True
+                break
+            else:
+                validID = False
+
+        #If admin value does NOT equal zero this function proceeds, if it equals zero exits
+        sql = "SELECT admin FROM bank_accounts WHERE ID = %s"
+        val = (accountNUM, )
+        cursor.execute(sql, val)
+        adminResult = cursor.fetchone()
+        isAdmin =adminResult[0]
+
+        #if this acct id has a true admin value then proceed
+        if isAdmin:
+            pass
+        
+        #else if this acct id admin value = 0 then return false
+        else: 
+            print("Sorry, you are not a bank administrator")
+            return False
 
     #makes sure id exists in data base
-    search = 'SELECT ID FROM bank_accounts'
-    cursor.execute(search)
-    acctIDs = cursor.fetchall()
+    else:
+        search = 'SELECT ID FROM bank_accounts'
+        cursor.execute(search)
+        acctIDs = cursor.fetchall()
 
-    print(acctIDs)
-    
-    accountNUM = int(input("Account Number: "))
-    for x in acctIDs:
-        ID = x[0]
-        if ID == accountNUM:
-            validID = True
-            break
-        else:
-            validID = False
+        print(acctIDs)
+        
+        accountNUM = int(input("Account Number: "))
+        for x in acctIDs:
+            ID = x[0]
+            if ID == accountNUM:
+                global THEONEANDONLYID 
+                THEONEANDONLYID = ID
+                validID = True
+                break
+            else:
+                validID = False
 
     if validID == True:
         search = 'SELECT PIN FROM bank_accounts WHERE ID = %s'
@@ -57,15 +89,16 @@ def enterProgram(x):
             return canEnter
         else:
             print("Incorrect PIN number, try again.")
-        
-    print("Sorry, that account is not in our system")
+    else:
+        print("Sorry, that account is not in our system")
+
     return canEnter
 
 #User has logged in with existing account , prints menu, called in main()
 def existingUser():
     canEnter = enterProgram(False)
     if canEnter == True:
-        printmenu()
+        printmenu(THEONEANDONLYID)
 
 
 #User would like to create an account, adds item to accountDict, called in main()
@@ -91,6 +124,11 @@ def newUser():
     val = (newACCTbalance, newACCTID)
     cursor.execute(query, val)
     connection.commit()
+    newACCTadmin = bool(input("Are you an admin(true/false): "))
+    query = "UPDATE bank_accounts SET admin = %s WHERE ID = %s"
+    val = (newACCTadmin, newACCTID)
+    cursor.execute(query, val)
+    connection.commit()
     query = "SELECT * FROM bank_accounts WHERE ID = %s"
     val = (newACCTID, )
     cursor.execute(query, val)
@@ -98,7 +136,50 @@ def newUser():
     print(newACCTinfo)
 
 
-#User is a bank admin (NEED TO ADD TRUE OR FALSE ADMIN COLUMN TO MYSQL)
+#Admin inputs 1,2,3 then inputs acctnum if statements for balance, pin, admin modification  called in adminAction()
+def modifyAccount():
+    modifyAction = input('Enter action request: ')
+    inputID = int(input("ID: "))
+    if modifyAction == "1": #modify balance
+        num = input("(1)Deposit or (2)Withdrawl: ")
+        editBalance(num, inputID)
+    elif modifyAction == "2": #modify pin
+        newPIN = input('New PIN: ')
+        sql = "UPDATE bank_accounts SET pin = %s WHERE ID = %s"
+        val = (newPIN, inputID)
+        cursor.execute(sql, val)
+        connection.commit()
+    elif modifyAction == "3": #modify admin status
+        isAdmin = input("Admin Status (true or false): ")
+        if isAdmin == "true":
+            isAdmin = int("1")
+        elif isAdmin == "false":
+            isAdmin = int("0")
+        sql = "UPDATE bank_accounts SET admin = %s WHERE ID = %s"
+        val = (isAdmin, inputID)
+        cursor.execute(sql, val)
+        connection.commit()
+
+
+#Admin can create account, close account, modify account // called in bankAdmin() and calls newUser()
+def adminAction(userInput):
+    if userInput == "1": #Create account
+        newUser()
+    elif userInput == "2": #Close account
+        inputID = int(input("ID: "))
+        sql = "DELETE FROM bank_accounts WHERE ID = %s"
+        val = (inputID, )
+        cursor.execute(sql, val)
+        connection.commit()
+        print("Account number " + inputID + " sucessfully deleted")
+    elif userInput == "3": #Modify account
+        modify = input("1) Modify Balance \n 2) Modify Pin \n 3) Modify Admin Status")
+        modifyAccount()
+    else:
+        print("Exiting...")
+        adminActive = False
+
+#User is a bank admin
 def bankAdmin():
     #can enter program will go through admin values
     canEnter = enterProgram(True)
@@ -106,37 +187,36 @@ def bankAdmin():
         adminActive = True
         while adminActive:
             print('1. Create New Account\n2. Close Account\n3. Modify an Account')
-            if userType == "1":
-                newUser()
-            elif userType == "2":
-                pass
-            elif userType == "3":
-                pass
-            else:
-                print("Exiting...")
-                adminActive = False
-                break
-
-    else:
-        print("Sorry, you are not a bank administrator")
-
-#Prints menu, called in existingUser()
-def printmenu():
-    print("//\n 1. Check Balance\n 2. Make Deposit\n 3. Make Withdrawl")
-    #NEEDS FUNCTION TO DO EACH OF THESE !!!
-    action = input("Enter action request: ")
-    if action == "1": 
-        #bankAdmin()
-        pass
-    elif action == "2":
-        pass
+            action = input("Enter action request: ")
+            adminAction(action)
         
-    elif action == "3":
+
+#function to edit bank account balance called in printmenu()
+def editBalance(action, ID):
+    if action == "1": #Check balance
+        sql = 'SELECT balance FROM bank_accounts WHERE ID = %s'
+        val = (ID, )
+        cursor.execute(sql, val)
+        balanceResult = cursor.fetchone()
+        balance = str(balanceResult[0])
+        print('You have $' + balance + ' in your account')
+    elif action == "2": #Make deposit
+        pass
+    elif action == "3": #Make withdrawl
         pass
     else:
         print("Exiting...")
         active = False
-        break
+
+#Prints menu, called in existingUser()
+def printmenu(ID):
+    print("//\n 1. Check Balance\n 2. Make Deposit\n 3. Make Withdrawl")
+    #NEEDS FUNCTION TO DO EACH OF THESE !!!
+    action = input("Enter action request: ")
+    editBalance(action, ID)
+    
+
+    
 
 
 def main():
@@ -148,8 +228,8 @@ def main():
     while active:
         userType = selectUserType()
         if userType == "1": 
-            #bankAdmin()
-            pass
+            bankAdmin()
+            
         elif userType == "2":
             existingUser()
             
